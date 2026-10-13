@@ -4,6 +4,10 @@ on:
   push:
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish, e.g. v1.1.0"
+        required: true
 
 permissions:
   contents: write
@@ -36,16 +40,7 @@ jobs:
           tar -czf barony-save-guard-linux.tar.gz -C out/linux .
 
       - name: Publish release
-        if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create ${{ github.ref_name }} BaronySaveGuard-windows.zip barony-save-guard-linux.tar.gz --title "Barony Save Guard ${{ github.ref_name }}" --generate-notes
-
-      - name: Keep downloads (manual runs)
-        if: "!startsWith(github.ref, 'refs/tags/')"
-        uses: actions/upload-artifact@v4
-        with:
-          name: downloads
-          path: |
-            BaronySaveGuard-windows.zip
-            barony-save-guard-linux.tar.gz
+          VERSION: ${{ inputs.version || github.ref_name }}
+        run: gh release create "$env:VERSION" BaronySaveGuard-windows.zip barony-save-guard-linux.tar.gz --target "${{ github.sha }}" --title "Barony Save Guard $env:VERSION" --generate-notes
